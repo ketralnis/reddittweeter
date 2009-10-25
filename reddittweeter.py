@@ -1,6 +1,5 @@
 #!/usr/local/bin/python
 
-import re
 import sys
 import json
 import time
@@ -81,7 +80,7 @@ def main(username, password):
                 # the text if it fits
                 extras = [' [%s]' % sr,
                           ' %d points' % score,
-                          ' (submitted by %s)' % submitter,
+                          ', submitted by %s' % submitter,
                           ' [%s]' % domain]
                 for extra in extras:
                     if len(title) + len(extra) + len(message_postfix) < maxlength:
