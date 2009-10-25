@@ -2,9 +2,10 @@
 
 import re
 import sys
+import json
 import time
+import urllib
 import twitter
-import feedparser
 from calendar import timegm
 from datetime import datetime, timedelta
 
@@ -14,7 +15,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 debug = False
 
-sourceurl = "http://www.reddit.com/.rss"
+sourceurl = "http://www.reddit.com/.json"
 dbname = 'reddittweeter.db'
 maxtweets = 10 # don't tweet more than this in one session
 keepfor = timedelta(days=7) # how long to keep articles in the sqlite
@@ -37,9 +38,6 @@ class Article(Base):
         self.id = id
         self.timestamp = timestamp
 
-def db_maintenance(metadata):
-    pass
-
 def main(username, password):
     engine = create_engine('sqlite:///%s' % dbname, echo = debug)
     Session = sessionmaker(bind=engine)
@@ -48,28 +46,48 @@ def main(username, password):
 
     api = twitter.Api(username=username, password=password, input_encoding=encoding)
 
-    feed = feedparser.parse(sourceurl)
+    text = urllib.urlopen(sourceurl).read()
+    parsed = json.loads(text)
 
-    urlanalyser = re.compile('http://www.reddit.com/r/([.a-zA-z0-9-_]+)/comments/([a-zA-z0-9]+)/.*')
     numtweets = 0
 
-    for entry in feed.entries:
-        match = urlanalyser.match(entry.link)
-        sr = str(match.group(1))
-        link_id = str(match.group(2))
-        timestamp = timegm(entry.updated_parsed)
+    for entry in parsed['data']['children']:
+        data = entry['data']
+
+        link_id = str(data['id'])
+        sr = str(data['subreddit'])
+        submitter = str(data['author'])
+        timestamp = int(data['created'])
+        score = int(data['score'])
+        domain = str(data['domain'])
+
+        try:
+            title = str(data['title'])
+        except UnicodeEncodeError:
+            title = data['title'].encode(encoding)
+        title = title.strip()
 
         existing = session.query(Article).filter_by(id = link_id).first()
         if existing and debug:
-            print "Skipping %r" % entry.title
+            print "Skipping %r" % title
         elif not existing:
-            title = entry.title.strip().encode(encoding)
             message_postfix = " http://reddit.com/%s" % link_id
 
             if len(title) + len(message_postfix) > maxlength:
                 title = title[:maxlength-len(title)-len(message_postfix)-3]
                 message = "%s...%s" % (title, message_postfix)
             else:
+                # try to add some extra stuff (like the subreddit) to
+                # the text if it fits
+                extras = [' [%s]' % sr,
+                          ' %d points' % score,
+                          ' (submitted by %s)' % submitter,
+                          ' [%s]' % domain]
+                for extra in extras:
+                    if len(title) + len(extra) + len(message_postfix) < maxlength:
+                        title += extra
+                    else:
+                        break
                 message = "%s%s" % (title, message_postfix)
 
             if debug:
