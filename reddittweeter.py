@@ -14,7 +14,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 debug = False
 
-sourceurl = "http://www.reddit.com/.json"
 dbname = 'reddittweeter.db'
 maxtweets = 10 # don't tweet more than this in one session
 keepfor = timedelta(days=7) # how long to keep articles in the sqlite
@@ -37,7 +36,7 @@ class Article(Base):
         self.id = id
         self.timestamp = timestamp
 
-def main(username, password):
+def main(sourceurl, username, password):
     engine = create_engine('sqlite:///%s' % dbname, echo = debug)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -108,9 +107,10 @@ def main(username, password):
     old_ids = session.query(Article).filter(Article.timestamp < expiry).delete()
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print "Usage: redditweeter USERNAME PASSWORD"
+    if len(sys.argv) != 4:
+        print "Usage: redditweeter SOURCEURL USERNAME PASSWORD"
         sys.exit(1)
-    username = sys.argv[1]
-    password = sys.argv[2]
-    main(username, password)
+    sourceurl = sys.argv[1]
+    username = sys.argv[2]
+    password = sys.argv[3]
+    main(sourceurl, username, password)
