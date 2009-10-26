@@ -32,7 +32,7 @@ Base = declarative_base()
 class Article(Base):
     __tablename__ = 'article'
     id = Column(String, primary_key = True)
-    timestamp = Column(Integer)
+    timestamp = Column(Integer, index=True)
 
     def __init__(self, id, timestamp):
         self.id = id
