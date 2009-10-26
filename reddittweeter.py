@@ -77,7 +77,6 @@ def tweet_item(entry):
             raise ValueError("Unknown reddit type %r" % kind)
 
         fname = data['name']
-        timestamp = data['created']
 
         message_postfix = (' %s' % link).encode(encoding)
 
@@ -97,7 +96,7 @@ def tweet_item(entry):
                     break
             message = "%s%s" % (title, message_postfix)
 
-            yield data['name'], message, timestamp
+            yield data['name'], message
 
 
 def _flatiter(x):
@@ -125,7 +124,7 @@ def main(sourceurl, twitter_username, twitter_password):
 
     numtweets = 0
 
-    for msg_id, message, timestamp in _flatiter(tweet_item(x) for x in parsed):
+    for msg_id, message in _flatiter(tweet_item(x) for x in parsed):
 
         existing = session.query(Article).filter_by(id = msg_id).first()
         if existing and debug:
@@ -138,6 +137,7 @@ def main(sourceurl, twitter_username, twitter_password):
             api.PostUpdate(message)
             time.sleep(1) # don't hit them too hard
 
+            timestamp = timegm(datetime.now().timetuple())
             session.add(Article(msg_id, timestamp))
             session.commit() # commit after every item so that we
                              # don't tweet the same item twice, even
