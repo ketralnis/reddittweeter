@@ -152,6 +152,7 @@ def main(sourceurl, twitter_username, twitter_password):
     # clean up old db items to keep it from ballooning in size
     expiry = timegm((datetime.now() - keepfor).timetuple())
     session.query(Article).filter(Article.timestamp < expiry).delete()
+    session.commit()
 
 
 if __name__ == '__main__':
