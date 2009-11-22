@@ -18,9 +18,9 @@ debug = False
 
 dbname = 'reddittweeter.db'
 maxtweets = 10 # don't tweet more than this in one session
-keepfor = timedelta(days=7) # how long to keep articles in the sqlite
-                            # cache to keep them from being tweeted
-                            # twice
+keepfor = timedelta(days=30) # how long to keep articles in the sqlite
+                             # cache to keep them from being tweeted
+                             # twice
 
 encoding = 'utf-8'
 maxlength = 140
