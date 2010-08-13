@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 
 import sys
 import json
@@ -8,7 +8,7 @@ from calendar import timegm
 from datetime import datetime, timedelta
 from xml.sax.saxutils import unescape as unescape_html
 
-import twitter
+import tweepy
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, String, Integer, create_engine
@@ -105,14 +105,17 @@ def _flatiter(x):
             yield z
 
 
-def main(sourceurl, twitter_username, twitter_password):
+def main(sourceurl, twitter_consumer, twitter_secret,
+         twitter_access_key, twitter_access_secret):
     engine = create_engine('sqlite:///%s' % dbname, echo = debug)
     Session = sessionmaker(bind=engine)
     session = Session()
     Base.metadata.create_all(engine)
 
-    api = twitter.Api(username=twitter_username, password=twitter_password,
-                      input_encoding=encoding)
+
+    auth = tweepy.OAuthHandler(twitter_consumer, twitter_secret)
+    auth.set_access_token(twitter_access_key, twitter_access_secret)
+    api = tweepy.API(auth)
 
     text = urllib.urlopen(sourceurl).read()
     parsed = json.loads(text)
@@ -134,8 +137,8 @@ def main(sourceurl, twitter_username, twitter_password):
             if debug:
                 print "Tweeting %r: %r" % (msg_id, message)
 
-            api.PostUpdate(message)
-            time.sleep(1) # don't hit them too hard
+            api.update_status(message)
+            time.sleep(10) # don't hit them too hard
 
             timestamp = timegm(datetime.now().timetuple())
             session.add(Article(msg_id, timestamp))
@@ -156,10 +159,17 @@ def main(sourceurl, twitter_username, twitter_password):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print "Usage: reddittweeter SOURCEURL TWITTER_USERNAME TWITTER_PASSWORD"
+    if len(sys.argv) != 6:
+        print "Usage: reddittweeter SOURCEURL TWITTER_CONSUMER TWITTER_SECRET ACCESS_KEY ACCESS_SECRET"
         sys.exit(1)
     sourceurl = sys.argv[1]
-    twitter_username = sys.argv[2]
-    twitter_password = sys.argv[3]
-    main(sourceurl, twitter_username, twitter_password)
+    # these are the tokens you get with your registered app
+    twitter_consumer = sys.argv[2]
+    twitter_secret   = sys.argv[3]
+    # these are the credentials for the account doing the tweeting.  See
+    #   http://joshthecoder.github.com/tweepy/docs/auth_tutorial.html
+    twitter_access_key = sys.argv[4]
+    twitter_access_secret = sys.argv[5]
+    
+    main(sourceurl, twitter_consumer, twitter_secret,
+         twitter_access_key, twitter_access_secret)
