@@ -8,7 +8,7 @@ from calendar import timegm
 from datetime import datetime, timedelta
 from xml.sax.saxutils import unescape as unescape_html
 
-import tweepy
+import tweepy, tweepy.error
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, String, Integer, create_engine
@@ -128,17 +128,26 @@ def main(sourceurl, twitter_consumer, twitter_secret,
     numtweets = 0
 
     for msg_id, message in _flatiter(tweet_item(x) for x in parsed):
-
         existing = session.query(Article).filter_by(id = msg_id).first()
         if existing and debug:
             print "Skipping %r" % msg_id
 
         elif not existing:
+            if numtweets > 0:
+                # sleep between tweets so as not to hit them too hard
+                time.sleep(1)
+
             if debug:
                 print "Tweeting %r: %r" % (msg_id, message)
 
-            api.update_status(message)
-            time.sleep(10) # don't hit them too hard
+            try:
+                api.update_status(message)
+            except tweepy.error.TweepError, e:
+                # selectively ignore duplicate tweet errors
+                if 'duplicate' not in e.reason:
+                    raise
+                elif debug:
+                    print "Warning: ignoring duplicate tweet"
 
             timestamp = timegm(datetime.now().timetuple())
             session.add(Article(msg_id, timestamp))
