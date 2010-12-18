@@ -40,7 +40,7 @@ class Article(Base):
 
 
 def link_tokens(data):
-    link = 'http://reddit.com/%s' % data['id']
+    link = 'http://redd.it/%s' % data['id']
 
     tokens = [ unescape_html(data['title']),
                ' [%s]' % data['subreddit'],
@@ -52,7 +52,7 @@ def link_tokens(data):
 
 
 def comment_tokens(data):
-    link = 'on http://reddit.com/%s' % data['link_id'].split('_')[1]
+    link = 'on http://redd.it/%s' % data['link_id'].split('_')[1]
     tokens = [ '"%s"' % unescape_html(data['body']),
                ', commented by %s' % data['author'],
                ]
