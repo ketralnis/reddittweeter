@@ -6,6 +6,7 @@ import time
 import urllib
 from calendar import timegm
 from datetime import datetime, timedelta
+from itertools import from_iterable
 from xml.sax.saxutils import unescape as unescape_html
 
 import tweepy, tweepy.error
@@ -96,13 +97,7 @@ def tweet_item(entry):
                     break
             message = "%s%s" % (title, message_postfix)
 
-            yield data['name'], message
-
-
-def _flatiter(x):
-    for y in x:
-        for z in y:
-            yield z
+        yield data['name'], message
 
 
 def main(sourceurl, twitter_consumer, twitter_secret,
@@ -127,7 +122,7 @@ def main(sourceurl, twitter_consumer, twitter_secret,
 
     numtweets = 0
 
-    for msg_id, message in _flatiter(tweet_item(x) for x in parsed):
+    for msg_id, message in from_iterable(tweet_item(x) for x in parsed):
         existing = session.query(Article).filter_by(id = msg_id).first()
         if existing and debug:
             print "Skipping %r" % msg_id
