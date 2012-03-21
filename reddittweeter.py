@@ -3,7 +3,7 @@
 import sys
 import json
 import time
-import urllib
+import urllib2
 from calendar import timegm
 from datetime import datetime, timedelta
 from itertools import chain
@@ -22,6 +22,8 @@ maxtweets = 10 # don't tweet more than this in one session
 keepfor = timedelta(days=30) # how long to keep articles in the sqlite
                              # cache to keep them from being tweeted
                              # twice
+opener = urllib2.build_opener()
+opener.addheaders = [("User-agent", "reddittweeter")]
 
 encoding = 'utf-8'
 maxlength = 140
@@ -111,7 +113,7 @@ def main(sourceurl, twitter_consumer, twitter_secret,
     auth.set_access_token(twitter_access_key, twitter_access_secret)
     api = tweepy.API(auth)
 
-    text = urllib.urlopen(sourceurl).read()
+    text = opener.open(sourceurl).read()
     parsed = json.loads(text)
 
     # there may be multiple listings, like on a comments-page
