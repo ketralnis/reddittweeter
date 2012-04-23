@@ -81,6 +81,9 @@ def tweet_item(entry):
 
         fname = data['name']
 
+        if data.get('over_18', False):
+            return
+
         message_postfix = (' %s' % link).encode(encoding)
 
         tokens = [ t.encode(encoding) for t in tokens ]
