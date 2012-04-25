@@ -26,7 +26,7 @@ opener = urllib2.build_opener()
 opener.addheaders = [("User-agent", "reddittweeter")]
 
 encoding = 'utf-8'
-maxlength = 140
+maxlength = 132
 
 ################################################################################
 
@@ -63,6 +63,8 @@ def comment_tokens(data):
 
 
 def tweet_item(entry):
+    if "error" in entry:
+        raise ValueError(str(entry))
     kind = entry['kind']
     data = entry['data']
 
@@ -142,8 +144,12 @@ def main(sourceurl, twitter_consumer, twitter_secret,
             try:
                 api.update_status(message)
             except tweepy.error.TweepError, e:
+                # Ignore stupid t.co stuff that screws up character counting
+                if "too long" in e.reason:
+                    print >> sys.stderr, "Too long: '%s'" % message
                 # selectively ignore duplicate tweet errors
-                if 'duplicate' not in e.reason:
+                elif 'duplicate' not in e.reason:
+                    e.reason += " (tweet: [%s])" % message
                     raise
                 elif debug:
                     print "Warning: ignoring duplicate tweet"
