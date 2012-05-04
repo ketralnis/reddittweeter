@@ -1,0 +1,13 @@
+[twitter]
+# these are the tokens you get with your registered app
+consumer = sldkfjsl
+secret = sldkfjlksjdf
+
+# these are the credentials for the account doing the tweeting.  See
+#   http://joshthecoder.github.com/tweepy/docs/auth_tutorial.html
+access_key = abc
+access_secret = 123
+
+[storage]
+# the path to the sqlite database for the tweeter
+db_path = /var/opt/reddittweeter/reddittweeter.db

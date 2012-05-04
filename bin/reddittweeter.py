@@ -17,7 +17,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 debug = False
 
-dbname = 'reddittweeter.db'
 maxtweets = 10 # don't tweet more than this in one session
 keepfor = timedelta(days=30) # how long to keep articles in the sqlite
                              # cache to keep them from being tweeted
@@ -108,7 +107,7 @@ def tweet_item(entry):
 
 
 def main(sourceurl, twitter_consumer, twitter_secret,
-         twitter_access_key, twitter_access_secret):
+         twitter_access_key, twitter_access_secret, dbname):
     engine = create_engine('sqlite:///%s' % dbname, echo = debug)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -173,17 +172,22 @@ def main(sourceurl, twitter_consumer, twitter_secret,
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 6:
-        print "Usage: reddittweeter SOURCEURL TWITTER_CONSUMER TWITTER_SECRET ACCESS_KEY ACCESS_SECRET"
+    if len(sys.argv) != 3:
+        print "Usage: reddittweeter CONFIG_FILE URL"
         sys.exit(1)
-    sourceurl = sys.argv[1]
-    # these are the tokens you get with your registered app
-    twitter_consumer = sys.argv[2]
-    twitter_secret   = sys.argv[3]
-    # these are the credentials for the account doing the tweeting.  See
-    #   http://joshthecoder.github.com/tweepy/docs/auth_tutorial.html
-    twitter_access_key = sys.argv[4]
-    twitter_access_secret = sys.argv[5]
-    
+    config_filename = sys.argv[1]
+    sourceurl = sys.argv[2]
+
+    import ConfigParser
+    parser = ConfigParser.RawConfigParser()
+    with open(config_filename, "r") as f:
+        parser.readfp(f)
+
+    twitter_consumer = parser.get("twitter", "consumer")
+    twitter_secret = parser.get("twitter", "secret")
+    twitter_access_key = parser.get("twitter", "access_key")
+    twitter_access_secret = parser.get("twitter", "access_secret")
+    dbname = parser.get("storage", "db_path")
+
     main(sourceurl, twitter_consumer, twitter_secret,
-         twitter_access_key, twitter_access_secret)
+         twitter_access_key, twitter_access_secret, dbname)
