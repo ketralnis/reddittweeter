@@ -46,8 +46,8 @@ def link_tokens(data):
 
     tokens = [ unescape_html(data['title']),
                ' [%s]' % data['subreddit'],
-               ' %d points' % data['score'],
-               ', submitted by %s' % data['author'],
+#               ' %d points' % data['score'],
+               ' submitted by %s' % data['author'],
                ' [%s]' % data['domain'],
                ]
     return link, tokens
